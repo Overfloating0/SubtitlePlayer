@@ -110,6 +110,35 @@ DP.videoInput.addEventListener('change', (e) => {
   }
 });
 
+// 打开网络视频 URL
+DP.loadVideoFromURL = function(url) {
+  DP.video.src = url;
+  DP.playerContainer.style.display = 'block';
+  DP.videoPlh.style.display = 'none';
+  DP.controls.style.display = 'flex';
+  DP.timelineSec.style.display = 'block';
+  DP.video.play().catch(() => {});
+  // 用 URL 路径末段或 hostname 作为视频名
+  const urlName = url.split('?')[0].split('/').pop() || new URL(url).hostname;
+  DP.currentVideoName = urlName;
+  document.title = `${urlName} - 字幕播放器`;
+  DP.lastVideoHandle = null;
+  DP.savedVideoHandle = null;
+  DP.btnRestore.style.display = 'none';
+  DP.showToast(`🔗 已加载: ${urlName}`);
+  DP.touchVideo(urlName);
+  DP.loadSubtitlesForVideo(urlName);
+  DP.reloadNotesForVideo();
+  DP.hintAutoSubtitle(urlName);
+};
+
+DP.btnOpenURL.addEventListener('click', () => {
+  const url = prompt('请输入视频直链 URL（支持 mp4/webm/m3u8 等浏览器可直接播放的格式）:');
+  if (!url || !url.trim()) return;
+  try { new URL(url.trim()); } catch(e) { DP.showToast('⚠ URL 格式不正确'); return; }
+  DP.loadVideoFromURL(url.trim());
+});
+
 // 打开字幕
 DP.btnOpenSub.addEventListener('click', async () => {
   if (window.showOpenFilePicker) {

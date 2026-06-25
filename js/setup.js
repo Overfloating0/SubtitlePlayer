@@ -3,6 +3,7 @@ window.DP = window.DP || {};
 // ==================== DOM 引用（最先加载，供所有模块使用） ====================
 DP.btnOpenVideo    = document.getElementById('btnOpenVideo');
 DP.videoInput      = document.getElementById('videoInput');
+DP.btnOpenURL      = document.getElementById('btnOpenURL');
 DP.btnOpenSub      = document.getElementById('btnOpenSub');
 DP.subInput        = document.getElementById('subInput');
 DP.btnOpenNotes    = document.getElementById('btnOpenNotes');
