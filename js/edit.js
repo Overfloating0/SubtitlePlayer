@@ -81,6 +81,7 @@
       sel.removeAllRanges();
       const range = document.createRange();
       range.selectNodeContents(textEl);
+      sel.addRange(range);
     }
     DP.showToast(`➕ 已在 ${DP.formatTime(t)} 新建字幕`);
   });
