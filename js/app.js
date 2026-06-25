@@ -44,6 +44,8 @@ DP.collectGarbage = function() {
       if (now - vReg[vName] > 30 * 24 * 3600 * 1000) {
         localStorage.removeItem('dp_sub_' + vName);
         localStorage.removeItem('dp_notes_' + vName);
+        localStorage.removeItem('dp_vol_' + vName);
+        localStorage.removeItem('dp_pos_' + vName);
         deleted++;
       } else { vKeep[vName] = vReg[vName]; }
     }

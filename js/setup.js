@@ -91,6 +91,9 @@ DP.savedVideoHandle  = null;
 DP.lastVideoHandle   = null;
 DP.subFileHandle     = null;
 DP.notesFileHandle   = null;
+DP.audioCtx           = null;
+DP.gainNode           = null;
+DP.customVolume       = 100;  // 0-300%
 
 // ==================== 多标签页隔离 ====================
 // window.name 特性：刷新保留、不被跨标签页共享、复制标签页时为空白

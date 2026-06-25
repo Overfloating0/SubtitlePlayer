@@ -2,6 +2,46 @@ window.DP = window.DP || {};
 
 // ==================== 视频管理 ====================
 
+// Web Audio API 路由，让音量可以超过 100%（上限 300%）
+DP.setupAudio = function() {
+  if (DP.gainNode) return;
+  try {
+    DP.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = DP.audioCtx.createMediaElementSource(DP.video);
+    DP.gainNode = DP.audioCtx.createGain();
+    DP.gainNode.gain.value = DP.customVolume / 100;
+    source.connect(DP.gainNode);
+    DP.gainNode.connect(DP.audioCtx.destination);
+    const resume = () => { if (DP.audioCtx && DP.audioCtx.state === 'suspended') DP.audioCtx.resume(); };
+    document.addEventListener('click', resume);
+    document.addEventListener('keydown', resume);
+  } catch(e) { /* 降级 */ }
+};
+
+DP.setVolume = function(vol) {
+  DP.customVolume = Math.max(0, Math.min(300, vol));
+  DP.video.volume = Math.min(1, DP.customVolume / 100);
+  if (DP.audioCtx && DP.audioCtx.state === 'suspended') DP.audioCtx.resume();
+  if (DP.gainNode) DP.gainNode.gain.value = DP.customVolume / 100;
+  // 按视频记忆音量
+  const vn = DP.currentVideoName || '_default';
+  try {
+    localStorage.setItem(DP.sessionKey('vol_' + vn), DP.customVolume);
+    localStorage.setItem('dp_vol_' + vn, DP.customVolume);
+  } catch(e) {}
+};
+
+DP.loadVolumeForVideo = function() {
+  const vn = DP.currentVideoName || '_default';
+  try {
+    let v = localStorage.getItem(DP.sessionKey('vol_' + vn));
+    if (v === null) v = localStorage.getItem('dp_vol_' + vn);
+    // 跨视频兜底：找回上次任意视频的音量
+    if (v === null) v = localStorage.getItem('dp_vol_default');
+    if (v !== null) DP.setVolume(parseInt(v));
+  } catch(e) {}
+};
+
 DP.loadVideo = function(file) {
   const url = URL.createObjectURL(file);
   DP.video.src = url;
@@ -9,9 +49,10 @@ DP.loadVideo = function(file) {
   DP.videoPlh.style.display = 'none';
   DP.controls.style.display = 'flex';
   DP.timelineSec.style.display = 'block';
-  DP.video.play().catch(() => {});
+  DP.video.play().catch(() => {}); DP.setupAudio();
   DP.currentVideoName = file.name;
   document.title = `${file.name} - 字幕播放器`;
+  DP.loadVolumeForVideo();
   console.log('🎬 已加载:', file.name);
   DP.showToast(`🎬 已加载: ${file.name}`);
 
@@ -117,10 +158,11 @@ DP.loadVideoFromURL = function(url) {
   DP.videoPlh.style.display = 'none';
   DP.controls.style.display = 'flex';
   DP.timelineSec.style.display = 'block';
-  DP.video.play().catch(() => {});
+  DP.video.play().catch(() => {}); DP.setupAudio();
   // 用 URL 路径末段或 hostname 作为视频名
   const urlName = url.split('?')[0].split('/').pop() || new URL(url).hostname;
   DP.currentVideoName = urlName;
+  DP.loadVolumeForVideo();
   document.title = `${urlName} - 字幕播放器`;
   DP.lastVideoHandle = null;
   DP.savedVideoHandle = null;
@@ -484,15 +526,17 @@ document.addEventListener('keydown', (e) => {
 
   if (e.code === 'ArrowUp') {
     e.preventDefault();
-    DP.video.volume = Math.min(1, DP.video.volume + 0.1);
-    DP.showToast(`🔊 ${Math.round(DP.video.volume * 100)}%`);
+    const newVol = Math.min(300, DP.customVolume + 10);
+    DP.setVolume(newVol);
+    DP.showToast(`🔊 ${newVol}%`);
     return;
   }
 
   if (e.code === 'ArrowDown') {
     e.preventDefault();
-    DP.video.volume = Math.max(0, DP.video.volume - 0.1);
-    DP.showToast(`🔉 ${Math.round(DP.video.volume * 100)}%`);
+    const newVol = Math.max(0, DP.customVolume - 10);
+    DP.setVolume(newVol);
+    DP.showToast(`🔉 ${newVol}%`);
     return;
   }
 
